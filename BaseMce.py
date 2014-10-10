@@ -30,10 +30,13 @@ class BaseMCE(object):
         return self.gap
     
     def read_html(self, file_path):
-        with open(file_path) as f:
-            temp_list = f.readlines()
+        with open(file_path, 'r') as f:
+            temp_list = [x for x in f.readlines() if x.strip()]
             coding = chardet.detect(''.join(temp_list))
-            self.html = [x.decode(coding["encoding"]) for x in temp_list]
+            # in case of the situation of <a space\n
+            # href="XXX.com"></a>
+            self.html = [x.decode(coding["encoding"]).strip('\r\n').strip('\n') for x in temp_list]
+            return self.html
             
     def is_ascii(self, uchar):
         if uchar <= u'\u007a':
@@ -91,11 +94,15 @@ class BaseMCE(object):
         def minus(d):
             return d[1] - d[0]
             
-        self.smooth_data.append(minus(self.data[0]))
+        self.smooth_data.append(0)
         for i in range(1, len(self.data)-1):
             self.smooth_data.append(minus(self.data[i-1]) + minus(self.data[i]) + 
                                minus(self.data[i+1]))
-        self.smooth_data.append(minus(self.data[-1]))
+        self.smooth_data.append(0)        
+        # print [x for x in self.smooth_data if x>0 ]
+        # l =  [x for x in self.data if minus(x) > 0]
+        # print l
+        # print [minus(x) for x in l]
 
     def choose_mc(self):
         """确定所选取的main content的范围"""
@@ -115,7 +122,7 @@ class BaseMCE(object):
         index = max_index
         while k <= self.gap:
             if (index - k) >= 0:
-                if self.smooth_data[index-k] > 0:
+                if self.smooth_data[index-k] >= 0:
                     self.mc = self.text[index-k] + '\n' + self.mc
                     index = index - k;
                     k = 1
@@ -127,7 +134,7 @@ class BaseMCE(object):
         index = max_index
         while k <= self.gap:
             if (index + k) < length:
-                if self.smooth_data[index+k] > 0:
+                if self.smooth_data[index+k] >= 0:
                     self.mc += self.text[index+k] + '\n'
                     index += k
                     k = 1

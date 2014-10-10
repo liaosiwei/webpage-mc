@@ -1,6 +1,7 @@
 #coding=utf-8
 
 import sys
+import chardet
 from HTMLParser import HTMLParser
 
 class ParseText(HTMLParser):
@@ -19,8 +20,8 @@ class ParseText(HTMLParser):
         
     def handle_data(self, data):
         if self.ignore_flag:
-            if data.strip():
-                self.text_list.append(data.strip())
+            if data:
+                self.text_list.append(data)
 
     def clear_data(self):
         self.text_list = []
@@ -37,13 +38,25 @@ class ParseText(HTMLParser):
 
 if __name__ == "__main__":
     pt = ParseText()
+    if len(sys.argv) == 2:
+        file_path = sys.argv[1]
+    else:
+        file_path = '/Users/Siwei/Documents/webpage content extraction/source/BBC Arabic/322.html'
 
-    with open('/Users/Siwei/Documents/webpage content extraction/source/Hamshahri/100.html') as f:
-        page = [x.decode('utf-8') for x in f.readlines()]
+    def read_html(file_path):
+        with open(file_path, 'r') as f:
+            temp_list = [x for x in f.readlines() if x.strip()]
+            coding = chardet.detect(''.join(temp_list))
+            html = [x.decode(coding["encoding"]).strip('\r\n').strip() for x in temp_list]
+            return html
+            
+    page = read_html(file_path)
 
     for p in page:
         pt.feed(p)
-        print pt.get_text()
+        text = pt.get_text()
+        if text:
+            print text.encode('utf-8')
         pt.clear_data()
     
     # pt = ParseText()    

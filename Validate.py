@@ -40,14 +40,15 @@ def f1_score(str1, str2):
         precision = k / m
         f1 = 2 * recall * precision / (recall + precision)
         return f1
-    s1 = ''.join(str1.split())
-    s2 = ''.join(str2.split())
-    return f1_inner(len(s1), len(s2), len(lcs(s1, s2)))
+    # s1 = ''.join(str1.split())
+    # s2 = ''.join(str2.split())
+    return f1_inner(len(str1), len(str2), len(lcs(str1, str2)))
 
 def main(source_dir, gold_dir):
     sum = 0.0
     num = 0
     mc_extractor = NanagMCE()
+    mc_extractor.set_gap(20)
     
     for root, dirs, files in os.walk(source_dir):
         for f in files:
@@ -56,9 +57,11 @@ def main(source_dir, gold_dir):
                 gold_file = os.path.join(gold_dir, f.rstrip('html') + 'txt')
 
                 mc = mc_extractor.feed(file_path)
+                if not mc:
+                    continue
                 try:
                     with open(gold_file) as f2:
-                        str2 = f2.read()
+                        str2 = f2.read().decode('utf-8')
                 except Exception as e:
                     continue
                 temp = f1_score(mc, str2)
